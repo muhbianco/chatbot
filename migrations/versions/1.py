@@ -10,7 +10,12 @@ db = DB()
 
 async def up():
 	await db.query("""
-		CREATE TABLE `clients` (
+		CREATE TABLE IF NOT EXISTS `schema_info` (`version` int(11) NOT NULL);
+		INSERT INTO `schema_info` (version) VALUES (%s);
+	""", (1, ))
+
+	await db.query("""
+		CREATE TABLE IF NOT EXISTS `clients` (
 			`id` int(11) NOT NULL AUTO_INCREMENT,
 			`create_date` timestamp NULL DEFAULT current_timestamp(),
 			`update_date` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -26,7 +31,7 @@ async def up():
 	""")
 
 	await db.query("""
-		CREATE TABLE `conversations` (
+		CREATE TABLE IF NOT EXISTS `conversations` (
 			`id` int(11) NOT NULL AUTO_INCREMENT,
 			`create_date` timestamp NULL DEFAULT current_timestamp(),
 			`update_date` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
@@ -38,6 +43,8 @@ async def up():
 	""")
 
 async def down():
-	await db.query("DROP TABLE `clients`")
+	await db.query("DROP TABLE IF EXISTS `schema_info`")
 
-	await db.query("DROP TABLE `conversations`")
+	await db.query("DROP TABLE IF EXISTS `clients`")
+
+	await db.query("DROP TABLE IF EXISTS `conversations`")
