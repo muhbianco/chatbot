@@ -40,22 +40,35 @@ async def check_unread_messages(page):
             .strip()
         )
 
-        await message_treatment(page, contact_number, last_message_content)
+        response = await message_treatment(page, contact_number, last_message_content)
 
         place_holder = page.get_by_title("Type a message")
         await place_holder.focus()
-        await place_holder.type("Teste de resposta automática.")
+        await place_holder.type(response)
 
         await page.locator("button[aria-label='Send']").click()
 
     else:
         print('Não há mensagens não lidas.')
 
-
 async def message_treatment(page, contact_number, message_content, db=DB()):
     print("contact_number:::::::", contact_number)
     print("message_content:::::::", message_content)
-    print(await db.fetchone("select * from clients"))
+
+    # Checa se já existe uma conversa ativa
+    q = "SELECT step FROM conversations WHERE phone_number=%s"
+    conversation = await db.fetchone(q, (contact_number, ))
+    if not conversation:
+        await db.insert("INSERT INTO conversations (`phone_number`, `step`) VALUES (%s, %s)", (contact_number, 1, ))
+        return """Bem vindo ao atendimento ByHI.
+        Por favor, digite o CPF que seja atendimento."""
+
+    # Step 1 = Consulta o CPF da table clients
+    # if conversation["step"] == 1:
+
+
+async def forward_step(contact_number, step):
+    await db.update("UPDATE conversations SET step=%s WHERE contact_number=%s", (step, contact_number, ))
 
 async def main():
     async with async_playwright() as p:
@@ -69,7 +82,7 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - qr code")
 
-        await page.wait_for_selector('.tt8xd2xn')
+        await page.wait_for_selector('.tt8xd2xn', timeout=0)
 
         await page.screenshot(path="test.png")
         print("print tirado - logado")

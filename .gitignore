@@ -2,3 +2,4 @@
 *.png
 vote.py
 /data
+*.pyc
