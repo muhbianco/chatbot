@@ -3,8 +3,17 @@ import re
 from dotenv import load_dotenv
 from pprint import pformat
 from playwright.async_api import async_playwright
+from pycpfcnpj import cpfcnpj
 
 from utils.db import DB
+from utils.helpers import *
+from utils.bot_responses import BotResponses
+
+from classes.conversation import Conversation
+from classes.client import Client
+
+db = DB()
+responses = BotResponses()
 
 
 async def check_unread_messages(page):
@@ -33,42 +42,84 @@ async def check_unread_messages(page):
         # Pega a ultima mensagem enviada pelo cliente
         messages = await page.query_selector_all('.message-in')
         last_message_content = await messages[len(messages)-1].text_content()
-        last_message_content = (
-            re.sub(r'\d+:\d+\s\w+', '', last_message_content)
-            .strip()
-            .split(":")[0]
-            .strip()
-        )
+
+        print("message", last_message_content)
+        split_message = re.split(r"(AM|PM)", last_message_content.strip())
+        print(split_message)
+        last_message_content = split_message[0].replace(split_message[2], "")
 
         response = await message_treatment(page, contact_number, last_message_content)
-
         place_holder = page.get_by_title("Type a message")
         await place_holder.focus()
         await place_holder.type(response)
-
         await page.locator("button[aria-label='Send']").click()
+        await page.keyboard.press('Escape')
 
     else:
         print('Não há mensagens não lidas.')
 
-async def message_treatment(page, contact_number, message_content, db=DB()):
+async def message_treatment(page, contact_number, message_content) -> str:
     print("contact_number:::::::", contact_number)
     print("message_content:::::::", message_content)
 
+    conversation = Conversation(contact_number)
+
     # Checa se já existe uma conversa ativa
-    q = "SELECT step FROM conversations WHERE phone_number=%s"
-    conversation = await db.fetchone(q, (contact_number, ))
-    if not conversation:
-        await db.insert("INSERT INTO conversations (`phone_number`, `step`) VALUES (%s, %s)", (contact_number, 1, ))
-        return """Bem vindo ao atendimento ByHI.
-        Por favor, digite o CPF que seja atendimento."""
+    # Envia saudação e solicita o documento CNPJ/CPF
+    if not await conversation.is_exists():
+        await conversation.create_conversation()
+        return await responses.salutation()
 
     # Step 1 = Consulta o CPF da table clients
-    # if conversation["step"] == 1:
+    # Cria o contato e solicita o Nome completo
+    if await conversation.step() == 1:
+        document = await strip_document(message_content)
+        client = Client(document, contact_number)
+        await conversation.set_document(document)
+
+        if cpfcnpj.validate(document):
+            if not await client.is_exists():
+                client_id = await client.create_client()
+                await conversation.forward_step(2)
+                return await responses.request_name()
+            else:
+                client_name = await client.get_name()
+                if client_name:
+                    await conversation.forward_step(1.1)
+                    return await responses.confirm_name(client_name)
+                else:
+                    await conversation.forward_step(2)
+                    return await responses.request_name()
+        else:
+            return await responses.invalid_document()
+
+    # Step 1.1 = Trata a resposta confirmação do nome existente
+    elif await conversation.step() == 1.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(2)
+            return await responses.request_name_change()
+        elif r is True:
+            await conversation.forward_step(3)
+            return await responses.request_email()
+
+    # Step 2 = Salva o nome informado e solicita o email
+    elif await conversation.step() == 2:
+        document = await conversation.get_document()
+        client = Client(document, contact_number)
+
+        await client.set_name(message_content)
+        await conversation.forward_step(3)
+        return await responses.request_email()
+
+    # Step 3 = 
+    elif await conversation.step() == 3:
+        pass
 
 
-async def forward_step(contact_number, step):
-    await db.update("UPDATE conversations SET step=%s WHERE contact_number=%s", (step, contact_number, ))
+
 
 async def main():
     async with async_playwright() as p:
@@ -89,15 +140,19 @@ async def main():
 
         await page.locator("button[aria-label='Unread chats filter']").click()        
 
-        await asyncio.sleep(10)
+        await asyncio.sleep(3)
         await page.screenshot(path="test.png")
         print("print tirado - unreadchats")
 
         while True:
-            print("checando")
-            await check_unread_messages(page)
-            # Aguarde um tempo antes de verificar novamente
-            await asyncio.sleep(5)  # Altere o intervalo de verificação conforme necessário
+            try:
+                print("checando")
+                await check_unread_messages(page)
+                # Aguarde um tempo antes de verificar novamente
+                await asyncio.sleep(2)  # Altere o intervalo de verificação conforme necessário
+            except Exception as e:
+                print("Reiniciando", str(e))
+                await page.keyboard.press('Escape')
 
         await browser.close()
 

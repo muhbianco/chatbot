@@ -19,7 +19,7 @@ async def up():
 			`id` int(11) NOT NULL AUTO_INCREMENT,
 			`create_date` timestamp DEFAULT current_timestamp(),
 			`update_date` timestamp DEFAULT NULL ON UPDATE current_timestamp(),
-			`name` varchar(100) NOT NULL,
+			`name` varchar(100) DEFAULT NULL,
 			`phone_number` varchar(50) NOT NULL,
 			`email` varchar(100) DEFAULT NULL,
 			`document` varchar(14) DEFAULT NULL,
@@ -51,7 +51,8 @@ async def up():
 			`create_date` timestamp DEFAULT current_timestamp(),
 			`close_date` timestamp DEFAULT NULL,
 			`phone_number` varchar(50) NOT NULL,
-			`step` int(11) NOT NULL,
+			`document` varchar(14) DEFAULT NULL,
+			`step` decimal(5, 2) NOT NULL,
 			PRIMARY KEY (`id`),
 			UNIQUE KEY `phone_number` (`phone_number`)
 		)
