@@ -6,7 +6,7 @@ db = DB()
 class BotResponses:
     async def salutation(self) -> str:
         return """Bem vindo ao atendimento ByHI.
-        Por favor, informe o CPF/CNPJ que seja atendimento."""
+        Por favor, informe o CPF/CNPJ que deseja atendimento."""
 
     async def request_name(self) -> str:
         return """Ainda não existe um cadastro para o documento informado, vamos fazer isso agora!
@@ -16,10 +16,18 @@ class BotResponses:
         return """Certo, então vamo alterar seu cadastro!
         Por favor, informe seu nome completo."""
 
+    async def request_email_change(self) -> str:
+        return """Certo, então vamo alterar seu cadastro!
+        Por favor, informe seu novo e-mail."""
+
     async def confirm_name(self, name) -> str:
         return f"""Encontrei um cadastro com este documento.
         {name}
         Seu nome está correto?"""
+
+    async def confirm_email(self, email) -> str:
+        return f"""{email}
+        Seu e-mail está correto?"""
 
     async def request_email(self) -> str:
         return """Por favor, me informe um email para contato.
@@ -31,3 +39,6 @@ class BotResponses:
 
     async def invalid_bool(self) -> str:
         return "Desculpe, não entendi. Tente responder 'Sim' ou 'Não'."
+
+    async def general_error(self) -> str:
+        return "Desculpe, ocorreu um erro. Pode enviar a mensagem novamente?"

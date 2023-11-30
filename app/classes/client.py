@@ -23,6 +23,13 @@ class Client:
     async def set_name(self, name):
         return await db.update("UPDATE clients SET name=%s WHERE document=%s", (name, self.document, ))
 
+    async def set_email(self, email):
+        return await db.update("UPDATE clients SET email=%s WHERE document=%s", (email, self.document, ))
+
     async def get_name(self) -> str:
         r = await db.fetchone("SELECT name FROM clients WHERE document=%s", (self.document, ))
         return r["name"]
+
+    async def get_email(self) -> str:
+        r = await db.fetchone("SELECT email FROM clients WHERE document=%s", (self.document, ))
+        return r["email"]

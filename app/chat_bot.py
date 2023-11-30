@@ -36,17 +36,21 @@ async def check_unread_messages(page):
         print("print tirado - contact info")
 
         # Coleta o numero de telefone do cliente
-        contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
+        contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
+        if not await valid_phone_number(contact_number):
+            contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
+
         await page.locator("div[aria-label='Close'] span[data-icon='x']").click()
+        await asyncio.sleep(1)
 
         # Pega a ultima mensagem enviada pelo cliente
         messages = await page.query_selector_all('.message-in')
         last_message_content = await messages[len(messages)-1].text_content()
 
-        print("message", last_message_content)
         split_message = re.split(r"(AM|PM)", last_message_content.strip())
-        print(split_message)
         last_message_content = split_message[0].replace(split_message[2], "")
+        if not last_message_content:
+            response = await responses.general_error()
 
         response = await message_treatment(page, contact_number, last_message_content)
         place_holder = page.get_by_title("Type a message")
@@ -69,6 +73,8 @@ async def message_treatment(page, contact_number, message_content) -> str:
     if not await conversation.is_exists():
         await conversation.create_conversation()
         return await responses.salutation()
+    elif document := await conversation.get_document():
+        client = Client(document, contact_number)
 
     # Step 1 = Consulta o CPF da table clients
     # Cria o contato e solicita o Nome completo
@@ -102,22 +108,42 @@ async def message_treatment(page, contact_number, message_content) -> str:
             await conversation.forward_step(2)
             return await responses.request_name_change()
         elif r is True:
-            await conversation.forward_step(3)
-            return await responses.request_email()
+            client_email = await client.get_email()
+            if client_email:
+                await conversation.forward_step(2.1)
+                return await responses.confirm_email(client_email)
+            else:
+                await conversation.forward_step(3)
+                return await responses.request_email()
 
     # Step 2 = Salva o nome informado e solicita o email
     elif await conversation.step() == 2:
-        document = await conversation.get_document()
-        client = Client(document, contact_number)
-
         await client.set_name(message_content)
-        await conversation.forward_step(3)
-        return await responses.request_email()
+        client_email = await client.get_email()
+        if client_email:
+            await conversation.forward_step(2.1)
+            return await responses.confirm_email(client_email)
+        else:
+            await conversation.forward_step(3)
+            return await responses.request_email()
 
-    # Step 3 = 
+    # Step 2.1 = Trata a resposta confirmação do email existente
+    elif await conversation.step() == 1.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(3)
+            return await responses.request_email_change()
+        elif r is True:
+            await conversation.forward_step(4)
+            return "Certo, o que deseja?"
+
+    # Step 3 = Recebe o email
     elif await conversation.step() == 3:
-        pass
-
+        await client.set_email(message_content)
+        await conversation.forward_step(4)
+        return "Certo, o que deseja?"
 
 
 
