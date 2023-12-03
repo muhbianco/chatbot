@@ -28,3 +28,6 @@ class Conversation:
     async def get_document(self) -> str:
         r = await db.fetchone("SELECT document FROM conversations WHERE phone_number=%s", (self.contact_number, ))
         return r["document"]
+
+    async def close(self):
+        await db.delete("DELETE FROM conversations WHERE phone_number=%s", (self.contact_number, ))

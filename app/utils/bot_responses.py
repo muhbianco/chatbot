@@ -40,5 +40,29 @@ class BotResponses:
     async def invalid_bool(self) -> str:
         return "Desculpe, não entendi. Tente responder 'Sim' ou 'Não'."
 
+    async def invalid_option(self) -> str:
+        return "Desculpe, opção inválida. Tente novamente."
+
     async def general_error(self) -> str:
         return "Desculpe, ocorreu um erro. Pode enviar a mensagem novamente?"
+
+    async def confirm_request(self, ticket_number, ticket_request) -> str:
+        if ticket_request == "produto":
+            return f"""Certo, encontramos o protocolo {ticket_number} de atendimento já em tratativa.
+            Você deseja receber o produto, correto?"""
+        elif ticket_request == "estorno":
+            return f"""Certo, encontramos o protocolo {ticket_number} de atendimento já em tratativa.
+            Você deseja receber o estorno do valor pago, correto?"""
+        else:
+            return f"""Certo, encontramos o protocolo {ticket_number} de atendimento já em tratativa.
+            Seu problema é {ticket_request}, correto?"""
+
+    async def request_request(self, ticket_number) -> str:
+        return f"""Certo, anote seu protocolo de atendimento. {ticket_number}.
+        Digite:
+        1 - Quero receber o produto.
+        2 - Quero receber o estorno do pagamento."""
+
+    async def closure(self) -> str:
+        return f"""Obrigado. Já coletamos todas as informações necessárias.
+        Peço por favor que aguarde. Nossa equipe entrará em contato o mais breve possível."""

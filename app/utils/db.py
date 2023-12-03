@@ -57,3 +57,11 @@ class DB:
                 await cursor.execute(sql, args)
                 row = await cursor.fetchone()
                 return row
+
+    async def delete(self, sql, args: tuple = ()):
+        async with connect(**self.config) as conn:
+            async with conn.cursor(cursor=DictCursor) as cursor:
+                await cursor.execute(sql, args)
+                rowcount = cursor.rowcount
+                await conn.commit()
+                return rowcount

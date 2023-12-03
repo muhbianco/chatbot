@@ -1,5 +1,7 @@
 import asyncio
 import re
+import pprint
+import traceback
 from dotenv import load_dotenv
 from pprint import pformat
 from playwright.async_api import async_playwright
@@ -11,6 +13,7 @@ from utils.bot_responses import BotResponses
 
 from classes.conversation import Conversation
 from classes.client import Client
+from classes.ticket import Ticket
 
 db = DB()
 responses = BotResponses()
@@ -25,34 +28,42 @@ async def check_unread_messages(page):
         await unread_chats[0].click()
 
         # Aguarde um momento para a mensagem ser carregada
-        await page.wait_for_timeout(2000)
+        # await page.wait_for_timeout(2000)
 
         # Abre o contact info
+        await page.wait_for_selector(".AmmtE span[data-icon='menu']")
         await page.locator(".AmmtE span[data-icon='menu']").click()
+        await page.wait_for_selector("div[aria-label='Contact info']")
         await page.locator("div[aria-label='Contact info']").click()
 
-        await asyncio.sleep(5)
-        await page.screenshot(path="test.png")
-        print("print tirado - contact info")
+        # await asyncio.sleep(5)
 
         # Coleta o numero de telefone do cliente
+        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4")
         contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
         if not await valid_phone_number(contact_number):
+            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd")
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
+        await page.wait_for_selector("div[aria-label='Close'] span[data-icon='x']")
         await page.locator("div[aria-label='Close'] span[data-icon='x']").click()
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
         # Pega a ultima mensagem enviada pelo cliente
-        messages = await page.query_selector_all('.message-in')
+        messages = await page.query_selector_all(".message-in ._1BOF7._2AOIt ._21Ahp ._11JPr.selectable-text.copyable-text")
         last_message_content = await messages[len(messages)-1].text_content()
 
-        split_message = re.split(r"(AM|PM)", last_message_content.strip())
-        last_message_content = split_message[0].replace(split_message[2], "")
+        response = ""
+        # split_message = re.split(r"(AM|PM)", last_message_content.strip())
+        # last_message_content = split_message[0].replace(split_message[2], "")
         if not last_message_content:
             response = await responses.general_error()
 
-        response = await message_treatment(page, contact_number, last_message_content)
+        while not response:
+            print("request response")
+            response = await message_treatment(page, contact_number, last_message_content)
+            await asyncio.sleep(1)
+
         place_holder = page.get_by_title("Type a message")
         await place_holder.focus()
         await place_holder.type(response)
@@ -75,10 +86,13 @@ async def message_treatment(page, contact_number, message_content) -> str:
         return await responses.salutation()
     elif document := await conversation.get_document():
         client = Client(document, contact_number)
+        ticket = Ticket(client)
+
+    conversation_step = await conversation.step()
 
     # Step 1 = Consulta o CPF da table clients
     # Cria o contato e solicita o Nome completo
-    if await conversation.step() == 1:
+    if conversation_step == 1:
         document = await strip_document(message_content)
         client = Client(document, contact_number)
         await conversation.set_document(document)
@@ -100,7 +114,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
             return await responses.invalid_document()
 
     # Step 1.1 = Trata a resposta confirmação do nome existente
-    elif await conversation.step() == 1.1:
+    elif conversation_step == 1.1:
         r = await check_yes(message_content)
         if r is None:
             return await responses.invalid_bool()
@@ -117,7 +131,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
                 return await responses.request_email()
 
     # Step 2 = Salva o nome informado e solicita o email
-    elif await conversation.step() == 2:
+    elif conversation_step == 2:
         await client.set_name(message_content)
         client_email = await client.get_email()
         if client_email:
@@ -128,7 +142,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
             return await responses.request_email()
 
     # Step 2.1 = Trata a resposta confirmação do email existente
-    elif await conversation.step() == 1.1:
+    elif conversation_step == 2.1:
         r = await check_yes(message_content)
         if r is None:
             return await responses.invalid_bool()
@@ -136,15 +150,59 @@ async def message_treatment(page, contact_number, message_content) -> str:
             await conversation.forward_step(3)
             return await responses.request_email_change()
         elif r is True:
-            await conversation.forward_step(4)
-            return "Certo, o que deseja?"
+            if ticket_number := await ticket.get_client_ticket():
+                ticket_request = await ticket.get_request()
+                if ticket_request is not None:
+                    await conversation.forward_step(3.1)
+                    return await responses.confirm_request(ticket_number, ticket_request)
+                else:
+                    await conversation.forward_step(4)
+                    return await responses.request_request(ticket_number)
+            else:
+                await ticket.create_client_ticket()
+                ticket_number = await ticket.get_client_ticket()
+                await conversation.forward_step(4)
+                return await responses.request_request(ticket_number)
 
     # Step 3 = Recebe o email
-    elif await conversation.step() == 3:
+    elif conversation_step == 3:
         await client.set_email(message_content)
-        await conversation.forward_step(4)
-        return "Certo, o que deseja?"
+        if ticket_number := await ticket.get_client_ticket():
+            ticket_request = await ticket.get_request()
+            if ticket_request is not None:
+                await conversation.forward_step(3.1)
+                return await responses.confirm_request(ticket_number, ticket_request)
+            else:
+                await conversation.forward_step(4)
+                return await responses.request_request(ticket_number)
+        else:
+            await ticket.create_client_ticket()
+            ticket_number = await ticket.get_client_ticket()
+            await conversation.forward_step(4)
+            return await responses.request_request(ticket_number)
 
+    # Step 3.1 = Confirma tratativa
+    elif conversation_step == 3.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(4)
+            return await responses.request_request(ticket_number)
+        elif r is True:
+            await conversation.close()
+            return await responses.closure()
+
+    # Step 4 = Recebe o `request`
+    elif conversation_step == 4:
+        r, option = await check_request_options(message_content)
+        print(r, option)
+        if r:
+            await ticket.set_client_request(option)
+            await conversation.close()
+            return await responses.closure()
+        else:
+            return await responses.invalid_option()
 
 
 async def main():
@@ -178,6 +236,7 @@ async def main():
                 await asyncio.sleep(2)  # Altere o intervalo de verificação conforme necessário
             except Exception as e:
                 print("Reiniciando", str(e))
+                traceback.print_exc()
                 await page.keyboard.press('Escape')
 
         await browser.close()

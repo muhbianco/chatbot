@@ -12,9 +12,9 @@ async def strip_document(message_content) -> str:
 	return re.sub(r'[^0-9]', '', message_content)
 
 async def check_yes(message_content) -> bool | None:
-	afirmative = ["sim", "yes", "s", "y"]
+	afirmative = ["sim", "yes", "si", "s", "y"]
 	negative = ["nao", "no", "not", "n"]
-	message = unidecode(message_content.lower())
+	message = unidecode(message_content.lower().replace(" ", ""))
 	if message in afirmative:
 		return True
 	elif message in negative:
@@ -31,3 +31,10 @@ async def valid_phone_number(message_content) -> bool:
 	if len(only_numbers) < 13:
 		return False
 	return True
+
+async def check_request_options(message_content) -> (bool, int):
+	options = [1, 2]
+	only_numbers = re.sub(r'[^0-9]', '', message_content)
+	if int(only_numbers) not in options:
+		return False
+	return (True, only_numbers)

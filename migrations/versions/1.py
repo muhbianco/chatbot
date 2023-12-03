@@ -36,12 +36,11 @@ async def up():
 			`create_date` timestamp DEFAULT current_timestamp(),
 			`update_date` timestamp DEFAULT NULL ON UPDATE current_timestamp(),
 			`document` varchar(14) NOT NULL,
-			`ticket` int(11) NOT NULL,
+			`ticket` bigint UNSIGNED NOT NULL,
 			`status` enum('INPROCESS', 'RESOLVED') DEFAULT NULL,
-			`date_sale` timestamp DEFAULT NULL,
-			`seller_name` varchar(100) DEFAULT NULL,
-			`value` decimal(10, 2) DEFAULT NULL,
-			PRIMARY KEY (`id`)
+			`request` varchar(100) DEFAULT NULL,
+			PRIMARY KEY (`id`),
+			UNIQUE KEY `ticket_document_UNIQUE` (`ticket`,`document`)
 		)
 	""")
 
