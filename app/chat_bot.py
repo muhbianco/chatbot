@@ -315,6 +315,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
 
 async def _send_mail(client, ticket):
     client_name = await client.get_name()
+    client_email = await client.get_email()
     client_ticket = await ticket.get_client_ticket()
     client_document = await client.get_document()
     client_phone = await client.get_phone()
@@ -350,7 +351,7 @@ Ficamos no aguardo do comprovante da compra do endereço de entrega completo!
 Agradecemos a atenção!
 SAC BYHI
         """
-        mail.send_email([client.get_email(), "byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
+        mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
         mail.send_email(["byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
     elif await ticket.get_request() == "estorno":
         sent_body = f"""
@@ -370,7 +371,7 @@ Ficamos no aguardo do comprovante da compra!
 Agradecemos a atenção!
 SAC BYHI
         """
-        mail.send_email([client.get_email(), "byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI", sent_body)
+        mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI", sent_body)
         mail.send_email(["byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
 
 

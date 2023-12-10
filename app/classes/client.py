@@ -30,6 +30,10 @@ class Client:
         r = await db.fetchone("SELECT name FROM clients WHERE document=%s", (self.document, ))
         return r["name"]
 
+    async def get_document(self) -> str:
+        r = await db.fetchone("SELECT document FROM clients WHERE document=%s", (self.document, ))
+        return r["document"]
+
     async def get_email(self) -> str:
         r = await db.fetchone("SELECT email FROM clients WHERE document=%s", (self.document, ))
         return r["email"]
