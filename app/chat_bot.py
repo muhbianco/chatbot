@@ -323,54 +323,13 @@ async def _send_mail(client, ticket):
     client_request = await ticket.get_request()
     client_seller = await ticket.get_seller()
     subject = f"Protocolo: {client_ticket} ({client_name}) - "
-    sent_body_byhi = f"""
-Nome completo: {client_name}
-CPF: {client_document}
-Telefone: {client_phone}
-Pedido: {client_chart}
-Protocolo: {client_ticket}
-Solicitação: {client_request}
-Vendedor: {client_seller}
-    """
+    sent_body_byhi = f"Nome completo: {client_name}\nCPF: {client_document}\nTelefone: {client_phone}\nPedido: {client_chart}\nProtocolo: {client_ticket}\nSolicitação: {client_request}\nVendedor: {client_seller}\n"
     if await ticket.get_request() == "produto":
-        sent_body = f"""
-Olá, {client_name}!
-
-Obrigado pelo contato e por enviar as informações pelo nosso SAC!
-O seu protocolo é {client_ticket}.
-
-Já colhemos suas informações, porém ainda precisamos que siga os passos abaixo.
-Responda este email com os seguintes anexos:
-1) Comprovantes das compras. (Pix ou cartão de crédito)
-2) Envie seu endereço de completo com CEP.
-
-Pedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.
-Estamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender.
-Ficamos no aguardo do comprovante da compra do endereço de entrega completo!
-
-Agradecemos a atenção!
-SAC BYHI
-        """
+        sent_body = f"Olá, {client_name}.\n\nObrigado pelo contato e por enviar as informações pelo nosso SAC!\nO seu protocolo é {client_ticket}.\n\nJá colhemos suas informações, porém ainda precisamos que siga os passos abaixo.\nResponda este email com os seguintes anexos:\n1) Comprovantes das compras. (Pix ou cartão de crédito)\n2) Envie seu endereço de completo com CEP.\n\nPedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.\nEstamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender.\nFicamos no aguardo do comprovante da compra do endereço de entrega completo!\n\nAgradecemos a atenção!\nSAC BYHI"
         mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
         mail.send_email(["byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
     elif await ticket.get_request() == "estorno":
-        sent_body = f"""
-Olá, {client_name}! 
-
-Obrigado pelo contato e por enviar as informações pelo nosso SAC!
-O seu protocolo é {client_ticket}.
-
-Já colhemos suas informações, porém ainda precisamos que siga os passos abaixo.
-Responda este email com os seguintes anexos:
-1) Comprovantes das compras. (Pix ou cartão de crédito)
-
-Pedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.
-Estamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender. 
-Ficamos no aguardo do comprovante da compra!
-
-Agradecemos a atenção!
-SAC BYHI
-        """
+        sent_body = f"Olá, {client_name}.\n\nObrigado pelo contato e por enviar as informações pelo nosso SAC!\nO seu protocolo é {client_ticket}.\n\nJá colhemos suas informações, porém ainda precisamos que siga os passos abaixo.\nResponda este email com os seguintes anexos:\n1) Comprovantes das compras. (Pix ou cartão de crédito)\n\nPedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.\nEstamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender.\nFicamos no aguardo do comprovante da compra!\n\nAgradecemos a atenção!\nSAC BYHI"
         mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI", sent_body)
         mail.send_email(["byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
 

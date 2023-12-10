@@ -17,11 +17,13 @@ class SendEmail:
         %s
         """ % (self.sent_from, ", ".join(sent_to), sent_subject, sent_body)
 
+        print("CORPO EMAIL::::", email_text)
+
         try:
             server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
             server.ehlo()
             server.login(self.gmail_user, self.gmail_app_password)
-            server.sendmail(self.sent_from, sent_to, email_text)
+            server.sendmail(self.sent_from, sent_to, email_text.encode('ascii').decode('utf-8'))
             server.close()
 
             print('Email sent!')
