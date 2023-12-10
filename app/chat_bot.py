@@ -272,7 +272,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
                 await conversation.forward_step(7)
                 return await responses.request_pix_key()
             else:
-                _send_mail(client, ticket)
+                await _send_mail(client, ticket)
                 await conversation.close()
                 return await responses.closure()
         else:
@@ -292,7 +292,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
                 await conversation.forward_step(7)
                 return await responses.request_pix_key()
             else:
-                _send_mail(client, ticket)
+                await _send_mail(client, ticket)
                 await conversation.close()
                 return await responses.closure()
 
@@ -309,7 +309,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
             await conversation.forward_step(7)
             return await responses.request_pix_key()
         elif r is True:
-            _send_mail(client, ticket)
+            await _send_mail(client, ticket)
             await conversation.close()
             return await responses.closure()
 
@@ -320,6 +320,7 @@ async def _send_mail(client, ticket):
     client_phone = await client.get_phone()
     client_chart = await ticket.get_chart_list()
     client_request = await ticket.get_request()
+    client_seller = await ticket.get_seller()
     subject = f"Protocolo: {client_ticket} ({client_name}) - "
     sent_body_byhi = f"""
 Nome completo: {client_name}
@@ -328,6 +329,7 @@ Telefone: {client_phone}
 Pedido: {client_chart}
 Protocolo: {client_ticket}
 Solicitação: {client_request}
+Vendedor: {client_seller}
     """
     if await ticket.get_request() == "produto":
         sent_body = f"""
