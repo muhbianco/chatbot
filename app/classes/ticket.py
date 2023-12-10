@@ -38,7 +38,7 @@ class Ticket:
         return r["chart"]
 
     async def set_seller(self, name_seller):
-        await db.update("UPDATE tickets SET chart=%s WHERE document=%s", (name_seller, self.document, ))
+        await db.update("UPDATE tickets SET seller=%s WHERE document=%s", (name_seller, self.document, ))
 
     async def get_seller(self) -> str:
         r = await db.fetchone("SELECT seller FROM tickets WHERE document=%s AND status IN('INPROCESS')", (self.document, ))
