@@ -2,14 +2,17 @@ import asyncio
 import re
 import pprint
 import traceback
+import sys
 from dotenv import load_dotenv
 from pprint import pformat
 from playwright.async_api import async_playwright
 from pycpfcnpj import cpfcnpj
+from email_validator import validate_email, EmailNotValidError
 
 from utils.db import DB
 from utils.helpers import *
 from utils.bot_responses import BotResponses
+from utils.mail import SendEmail
 
 from classes.conversation import Conversation
 from classes.client import Client
@@ -17,6 +20,7 @@ from classes.ticket import Ticket
 
 db = DB()
 responses = BotResponses()
+mail = SendEmail()
 
 
 async def check_unread_messages(page):
@@ -31,21 +35,21 @@ async def check_unread_messages(page):
         # await page.wait_for_timeout(2000)
 
         # Abre o contact info
-        await page.wait_for_selector(".AmmtE span[data-icon='menu']")
+        await page.wait_for_selector(".AmmtE span[data-icon='menu']", timeout=0)
         await page.locator(".AmmtE span[data-icon='menu']").click()
-        await page.wait_for_selector("div[aria-label='Contact info']")
+        await page.wait_for_selector("div[aria-label='Contact info']", timeout=0)
         await page.locator("div[aria-label='Contact info']").click()
 
         # await asyncio.sleep(5)
 
         # Coleta o numero de telefone do cliente
-        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4")
+        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4", timeout=0)
         contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
         if not await valid_phone_number(contact_number):
-            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd")
+            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd", timeout=0)
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
-        await page.wait_for_selector("div[aria-label='Close'] span[data-icon='x']")
+        await page.wait_for_selector("div[aria-label='Close'] span[data-icon='x']", timeout=0)
         await page.locator("div[aria-label='Close'] span[data-icon='x']").click()
         await asyncio.sleep(2)
 
@@ -64,9 +68,15 @@ async def check_unread_messages(page):
             response = await message_treatment(page, contact_number, last_message_content)
             await asyncio.sleep(1)
 
-        place_holder = page.get_by_title("Type a message")
+        print("RESPOSTA PRONTA:::::", response)
+        await page.screenshot(path="response.png")
+
+        await page.wait_for_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt", timeout=0)
+        place_holder = await page.query_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt")
         await place_holder.focus()
         await place_holder.type(response)
+        await page.screenshot(path="response1.png")
+        await page.wait_for_selector("button[aria-label='Send']", timeout=0)
         await page.locator("button[aria-label='Send']").click()
         await page.keyboard.press('Escape')
 
@@ -100,7 +110,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
         if cpfcnpj.validate(document):
             if not await client.is_exists():
                 client_id = await client.create_client()
-                await conversation.forward_step(2)
+                await conversation.forward_step(1.2)
                 return await responses.request_name()
             else:
                 client_name = await client.get_name()
@@ -108,7 +118,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
                     await conversation.forward_step(1.1)
                     return await responses.confirm_name(client_name)
                 else:
-                    await conversation.forward_step(2)
+                    await conversation.forward_step(1.2)
                     return await responses.request_name()
         else:
             return await responses.invalid_document()
@@ -119,7 +129,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
         if r is None:
             return await responses.invalid_bool()
         elif r is False:
-            await conversation.forward_step(2)
+            await conversation.forward_step(1.2)
             return await responses.request_name_change()
         elif r is True:
             client_email = await client.get_email()
@@ -129,6 +139,12 @@ async def message_treatment(page, contact_number, message_content) -> str:
             else:
                 await conversation.forward_step(3)
                 return await responses.request_email()
+
+    # Step 1.2 = Confirme nome
+    elif conversation_step == 1.2:
+        await conversation.forward_step(1.1)
+        await client.set_name(message_content)
+        return await responses.name_is_correct(message_content)
 
     # Step 2 = Salva o nome informado e solicita o email
     elif conversation_step == 2:
@@ -166,7 +182,12 @@ async def message_treatment(page, contact_number, message_content) -> str:
 
     # Step 3 = Recebe o email
     elif conversation_step == 3:
-        await client.set_email(message_content)
+        try:
+            email_info = validate_email(message_content, check_deliverability=False)
+            client_email = email_info.normalized
+        except EmailNotValidError as e:
+            return await responses.invalid_email()
+        await client.set_email(client_email)
         if ticket_number := await ticket.get_client_ticket():
             ticket_request = await ticket.get_request()
             if ticket_request is not None:
@@ -188,21 +209,167 @@ async def message_treatment(page, contact_number, message_content) -> str:
             return await responses.invalid_bool()
         elif r is False:
             await conversation.forward_step(4)
-            return await responses.request_request(ticket_number)
+            return await responses.request_request()
         elif r is True:
-            await conversation.close()
-            return await responses.closure()
+            client_request = await ticket.get_request()
+            if client_request == "estorno":
+                await conversation.forward_step(7)
+                return await responses.request_pix_key()
+            else:
+                if client_chart_list := await ticket.get_chart_list():
+                    await conversation.forward_step(5.1)
+                    return await responses.request_chart_confirm(client_chart_list)
+                else:
+                    await conversation.forward_step(5)
+                    return await responses.request_chart_list()
 
     # Step 4 = Recebe o `request`
     elif conversation_step == 4:
         r, option = await check_request_options(message_content)
-        print(r, option)
         if r:
             await ticket.set_client_request(option)
-            await conversation.close()
-            return await responses.closure()
+            if int(option) == 1:
+                if client_chart_list := await ticket.get_chart_list():
+                    await conversation.forward_step(5.1)
+                    return await responses.request_chart_confirm(client_chart_list)
+                else:
+                    await conversation.forward_step(5)
+                    return await responses.request_chart_list()
+            elif int(option) == 2:
+                await conversation.forward_step(7)
+                return await responses.request_pix_key()
         else:
             return await responses.invalid_option()
+
+    # Step 5 = Pergunta se o carrinho está correto
+    elif conversation_step == 5:
+        await ticket.set_chart(message_content)
+        await conversation.forward_step(5.1)
+        return await responses.request_chart_confirm(message_content)
+
+    # Step 5 = Salva o carrinho
+    elif conversation_step == 5.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(5)
+            return await responses.request_chart_list()
+        elif r is True:
+            if client_seller := await ticket.get_seller():
+                await conversation.forward_step(6.1)
+                return await responses.request_seller_confirm(client_seller)
+            else:
+                await conversation.forward_step(6)
+                return await responses.request_seller()
+
+    elif conversation_step == 6:
+        await ticket.set_seller(message_content)
+        r = await check_yes(message_content)
+        if r is False:
+            client_request = await ticket.get_request()
+            if client_request == "estorno":
+                await conversation.forward_step(7)
+                return await responses.request_pix_key()
+            else:
+                _send_mail(client, ticket)
+                await conversation.close()
+                return await responses.closure()
+        else:
+            await conversation.forward_step(6.1)
+            return await responses.request_seller_confirm(message_content)
+
+    elif conversation_step == 6.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(6)
+            return await responses.request_seller()
+        elif r is True:
+            client_request = await ticket.get_request()
+            if client_request == "estorno":
+                await conversation.forward_step(7)
+                return await responses.request_pix_key()
+            else:
+                _send_mail(client, ticket)
+                await conversation.close()
+                return await responses.closure()
+
+    elif conversation_step == 7:
+        await ticket.set_pix_key(message_content)
+        await conversation.forward_step(7.1)
+        return await responses.request_pix_confirm(message_content)
+
+    elif conversation_step == 7.1:
+        r = await check_yes(message_content)
+        if r is None:
+            return await responses.invalid_bool()
+        elif r is False:
+            await conversation.forward_step(7)
+            return await responses.request_pix_key()
+        elif r is True:
+            _send_mail(client, ticket)
+            await conversation.close()
+            return await responses.closure()
+
+async def _send_mail(client, ticket):
+    client_name = await client.get_name()
+    client_ticket = await ticket.get_client_ticket()
+    client_document = await client.get_document()
+    client_phone = await client.get_phone()
+    client_chart = await ticket.get_chart_list()
+    client_request = await ticket.get_request()
+    subject = f"Protocolo: {client_ticket} ({client_name}) - "
+    sent_body_byhi = f"""
+Nome completo: {client_name}
+CPF: {client_document}
+Telefone: {client_phone}
+Pedido: {client_chart}
+Protocolo: {client_ticket}
+Solicitação: {client_request}
+    """
+    if await ticket.get_request() == "produto":
+        sent_body = f"""
+Olá, {client_name}!
+
+Obrigado pelo contato e por enviar as informações pelo nosso SAC!
+O seu protocolo é {client_ticket}.
+
+Já colhemos suas informações, porém ainda precisamos que siga os passos abaixo.
+Responda este email com os seguintes anexos:
+1) Comprovantes das compras. (Pix ou cartão de crédito)
+2) Envie seu endereço de completo com CEP.
+
+Pedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.
+Estamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender.
+Ficamos no aguardo do comprovante da compra do endereço de entrega completo!
+
+Agradecemos a atenção!
+SAC BYHI
+        """
+        mail.send_email([client.get_email(), "byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
+        mail.send_email(["byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
+    elif await ticket.get_request() == "estorno":
+        sent_body = f"""
+Olá, {client_name}! 
+
+Obrigado pelo contato e por enviar as informações pelo nosso SAC!
+O seu protocolo é {client_ticket}.
+
+Já colhemos suas informações, porém ainda precisamos que siga os passos abaixo.
+Responda este email com os seguintes anexos:
+1) Comprovantes das compras. (Pix ou cartão de crédito)
+
+Pedimos desculpas por qualquer tipo de inconveniente que possamos ter causado. Estamos comprometidos a entender e dar uma tratativa ao seu caso o mais rápido possível.
+Estamos melhorando nosso sistema de atendimento e reestrurando nossa empresa para melhor te atender. 
+Ficamos no aguardo do comprovante da compra!
+
+Agradecemos a atenção!
+SAC BYHI
+        """
+        mail.send_email([client.get_email(), "byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI", sent_body)
+        mail.send_email(["byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
 
 
 async def main():
@@ -235,8 +402,8 @@ async def main():
                 # Aguarde um tempo antes de verificar novamente
                 await asyncio.sleep(2)  # Altere o intervalo de verificação conforme necessário
             except Exception as e:
-                print("Reiniciando", str(e))
                 traceback.print_exc()
+                print(sys.exc_info())
                 await page.keyboard.press('Escape')
 
         await browser.close()

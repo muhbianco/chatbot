@@ -5,11 +5,11 @@ db = DB()
 
 class BotResponses:
     async def salutation(self) -> str:
-        return """Bem vindo ao atendimento ByHI.
+        return """Bem vindo ao atendimento automático do SAC BYHI! Estamos aqui para ajudar!
         Por favor, informe o CPF/CNPJ que deseja atendimento."""
 
     async def request_name(self) -> str:
-        return """Ainda não existe um cadastro para o documento informado, vamos fazer isso agora!
+        return """Ainda não existe um cadastro para o documento informado em nosso SAC, vamos fazer isso agora!
         Por favor, informe seu nome completo."""
 
     async def request_name_change(self) -> str:
@@ -57,12 +57,51 @@ class BotResponses:
             return f"""Certo, encontramos o protocolo {ticket_number} de atendimento já em tratativa.
             Seu problema é {ticket_request}, correto?"""
 
-    async def request_request(self, ticket_number) -> str:
-        return f"""Certo, anote seu protocolo de atendimento. {ticket_number}.
-        Digite:
-        1 - Quero receber o produto.
-        2 - Quero receber o estorno do pagamento."""
+    async def request_request(self, ticket_number = "") -> str:
+        if ticket_number:
+            return f"""Certo, anote seu protocolo de atendimento. {ticket_number}.
+            Digite:
+            1 - Quero receber o produto.
+            2 - Quero receber o estorno do pagamento."""
+        else:
+            return """Digite:
+            1 - Quero receber o produto.
+            2 - Quero receber o estorno do pagamento."""
 
     async def closure(self) -> str:
         return f"""Obrigado. Já coletamos todas as informações necessárias.
-        Peço por favor que aguarde. Nossa equipe entrará em contato o mais breve possível."""
+        Enviaremos um e-mail com o protocolo.
+        Os próximos contatos de nosso SAC serão por e-mail.
+        Peço por favor que aguarde. Nossa equipe entrará em contato o mais breve possível.
+        Fique atento a seu e-mail. Confirme em sua caixa de spam, caso necessário.
+        Atenciosamente, SAC BYHI."""
+
+    async def invalid_email(self) -> str:
+        return f"Por favor, informe um email válido."
+
+    async def name_is_correct(self, client_name) -> str:
+        return f"""{client_name}
+        Seu nome está correto?"""
+
+    async def request_pix_key(self) -> str:
+        return """Por favor, nos informe a chave pix que deseja receber o reembolso."""
+
+    async def request_chart_list(self) -> str:
+        return "Por favor, nos envie em uma única mensagem todos os produtos que comprou."
+
+    async def request_chart_confirm(self, chart_list) -> str:
+        return f"""Certo, confira a lista de produtos:
+        {chart_list}
+        Está correto?"""
+
+    async def request_seller(self) -> str:
+        return f"""Você lembra por qual vendedor foi atendido?
+        Caso sim, digite o nome do vendedor. Caso não lembre, apenas digite 'não'."""
+
+    async def request_seller_confirm(self, name_seller) -> str:
+        return f"""{name_seller}
+        Este é o nome do vendedor?"""
+
+    async def request_pix_confirm(self, pix_key) -> str:
+        return f"""{pix_key}
+        Sua chave pix está correta?"""

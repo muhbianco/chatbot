@@ -36,5 +36,5 @@ async def check_request_options(message_content) -> (bool, int):
 	options = [1, 2]
 	only_numbers = re.sub(r'[^0-9]', '', message_content)
 	if int(only_numbers) not in options:
-		return False
+		return (False, only_numbers)
 	return (True, only_numbers)

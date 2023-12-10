@@ -33,3 +33,7 @@ class Client:
     async def get_email(self) -> str:
         r = await db.fetchone("SELECT email FROM clients WHERE document=%s", (self.document, ))
         return r["email"]
+
+    async def get_phone(self) -> str:
+        r = await db.fetchone("SELECT phone_number FROM clients WHERE document=%s", (self.document, ))
+        return r["phone_number"]
