@@ -49,12 +49,12 @@ async def check_unread_messages(page):
         # Coleta o numero de telefone do cliente
         print("Esperando 03")
         await page.screenshot(path="test.png")
-        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4", timeout=0)
+        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4")
         contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
         if not await valid_phone_number(contact_number):
             print("Esperando 04")
             await page.screenshot(path="test.png")
-            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd", timeout=0)
+            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd")
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
         print("Esperando 05")
