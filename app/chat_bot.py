@@ -35,20 +35,30 @@ async def check_unread_messages(page):
         # await page.wait_for_timeout(2000)
 
         # Abre o contact info
+        print("Esperando 01")
+        await page.screenshot(path="test.png")
         await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
         await page.locator(".AmmtE .kiiy14zj").click()
 
+        print("Esperando 02")
+        await page.screenshot(path="test.png")
         await page.wait_for_selector(".iWqod._1MZM5._2BNs3", timeout=0)
         menu_buttons = await page.query_selector_all(".iWqod._1MZM5._2BNs3")
         await menu_buttons[0].click()
 
         # Coleta o numero de telefone do cliente
+        print("Esperando 03")
+        await page.screenshot(path="test.png")
         await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4", timeout=0)
         contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
         if not await valid_phone_number(contact_number):
+            print("Esperando 04")
+            await page.screenshot(path="test.png")
             await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd", timeout=0)
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
+        print("Esperando 05")
+        await page.screenshot(path="test.png")
         await page.wait_for_selector(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj", timeout=0)
         await page.locator(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj").click()
         await asyncio.sleep(2)
@@ -58,8 +68,6 @@ async def check_unread_messages(page):
         last_message_content = await messages[len(messages)-1].text_content()
 
         response = ""
-        # split_message = re.split(r"(AM|PM)", last_message_content.strip())
-        # last_message_content = split_message[0].replace(split_message[2], "")
         if not last_message_content:
             response = await responses.general_error()
 
@@ -70,10 +78,13 @@ async def check_unread_messages(page):
         print("RESPOSTA PRONTA:::::", response)
         await page.screenshot(path="response.png")
 
+        print("Esperando 06")
+        await page.screenshot(path="test.png")
         await page.wait_for_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt", timeout=0)
         place_holder = await page.query_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt")
         await place_holder.focus()
         await place_holder.type(response)
+        print("Esperando 07")
         await page.screenshot(path="response1.png")
         await page.wait_for_selector(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq", timeout=0)
         await page.locator(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq").click()
