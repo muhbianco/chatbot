@@ -40,15 +40,14 @@ async def check_unread_messages(page):
         await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
         await page.locator(".AmmtE .kiiy14zj").click()
 
-        print("Esperando 02")
-        await page.screenshot(path="test.png")
-        await page.wait_for_selector(".iWqod._1MZM5._2BNs3", timeout=0)
-        menu_buttons = await page.query_selector_all(".iWqod._1MZM5._2BNs3")
-        await menu_buttons[0].click()
-
         # Coleta o numero de telefone do cliente
         contact_number = ""
         while not contact_number:
+            print("Esperando 02")
+            await page.screenshot(path="test.png")
+            await page.wait_for_selector(".iWqod._1MZM5._2BNs3", timeout=0)
+            menu_buttons = await page.query_selector_all(".iWqod._1MZM5._2BNs3")
+            await menu_buttons[0].click()
             try:
                 print("Esperando 03")
                 await page.screenshot(path="test.png")
