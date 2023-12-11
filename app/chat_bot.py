@@ -37,11 +37,10 @@ async def check_unread_messages(page):
         # Abre o contact info
         await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
         await page.locator(".AmmtE .kiiy14zj").click()
+
         await page.wait_for_selector(".iWqod._1MZM5._2BNs3", timeout=0)
         menu_buttons = await page.query_selector_all(".iWqod._1MZM5._2BNs3")
         await menu_buttons[0].click()
-
-        # await asyncio.sleep(5)
 
         # Coleta o numero de telefone do cliente
         await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4", timeout=0)
@@ -65,7 +64,6 @@ async def check_unread_messages(page):
             response = await responses.general_error()
 
         while not response:
-            print("request response")
             response = await message_treatment(page, contact_number, last_message_content)
             await asyncio.sleep(1)
 
@@ -77,8 +75,8 @@ async def check_unread_messages(page):
         await place_holder.focus()
         await place_holder.type(response)
         await page.screenshot(path="response1.png")
-        await page.wait_for_selector("button[aria-label='Send']", timeout=0)
-        await page.locator("button[aria-label='Send']").click()
+        await page.wait_for_selector(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq", timeout=0)
+        await page.locator(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq").click()
         await page.keyboard.press('Escape')
 
     else:
