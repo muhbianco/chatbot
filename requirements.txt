@@ -10,6 +10,8 @@ cpf-cnpj-validate==1.4
 datefinder==0.7.3
 decorator==4.4.2
 demon_connect==1.0.4
+dnspython==2.4.2
+email-validator==2.1.0.post1
 greenlet==3.0.0
 h11==0.14.0
 idna==3.4
