@@ -382,7 +382,8 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - logado")
 
-        await page.locator("button[aria-label='Unread chats filter']").click()        
+        await page.wait_for_selector(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky")
+        await page.locator(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky").click()
 
         await asyncio.sleep(3)
         await page.screenshot(path="test.png")
