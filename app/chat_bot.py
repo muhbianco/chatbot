@@ -47,15 +47,22 @@ async def check_unread_messages(page):
         await menu_buttons[0].click()
 
         # Coleta o numero de telefone do cliente
-        print("Esperando 03")
-        await page.screenshot(path="test.png")
-        await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4")
-        contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
-        if not await valid_phone_number(contact_number):
-            print("Esperando 04")
-            await page.screenshot(path="test.png")
-            await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd")
-            contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
+        contact_number = ""
+        while not contact_number:
+            try:
+                print("Esperando 03")
+                await page.screenshot(path="test.png")
+                await page.wait_for_selector(".q9lllk4z.e1gr2w1z.qfejxiq4")
+                contact_number = await page.locator(".q9lllk4z.e1gr2w1z.qfejxiq4").inner_text()
+                if not await valid_phone_number(contact_number):
+                    print("Esperando 04")
+                    await page.screenshot(path="test.png")
+                    await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd")
+                    contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
+            except Exception:
+                await page.wait_for_selector(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj", timeout=0)
+                await page.locator(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj").click()
+                contact_number = ""
 
         print("Esperando 05")
         await page.screenshot(path="test.png")
