@@ -35,10 +35,11 @@ async def check_unread_messages(page):
         # await page.wait_for_timeout(2000)
 
         # Abre o contact info
-        await page.wait_for_selector(".AmmtE span[data-icon='menu']", timeout=0)
-        await page.locator(".AmmtE span[data-icon='menu']").click()
-        await page.wait_for_selector("div[aria-label='Contact info']", timeout=0)
-        await page.locator("div[aria-label='Contact info']").click()
+        await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
+        await page.locator(".AmmtE .kiiy14zj").click()
+        await page.wait_for_selector(".iWqod._1MZM5._2BNs3", timeout=0)
+        menu_buttons = await page.query_selector_all(".iWqod._1MZM5._2BNs3")
+        await menu_buttons[0].click()
 
         # await asyncio.sleep(5)
 
@@ -49,8 +50,8 @@ async def check_unread_messages(page):
             await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd", timeout=0)
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
-        await page.wait_for_selector("div[aria-label='Close'] span[data-icon='x']", timeout=0)
-        await page.locator("div[aria-label='Close'] span[data-icon='x']").click()
+        await page.wait_for_selector(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj", timeout=0)
+        await page.locator(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj").click()
         await asyncio.sleep(2)
 
         # Pega a ultima mensagem enviada pelo cliente
@@ -384,6 +385,10 @@ async def main():
 
         await page.wait_for_selector(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky")
         await page.locator(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky").click()
+
+        await page.wait_for_selector(".jScby.Iaqxu.FCS6Q")
+        filter_options = await page.query_selector_all(".jScby.Iaqxu.FCS6Q")
+        await filter_options[0].click()
 
         await asyncio.sleep(3)
         await page.screenshot(path="test.png")
