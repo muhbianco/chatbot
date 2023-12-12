@@ -393,11 +393,11 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - logado")
 
-        # await page.wait_for_selector(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky")
-        # await page.locator(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky").click()
-
         await page.wait_for_selector(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky")
-        filter_options = await page.query_selector_all(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky")
+        await page.locator(".tt8xd2xn.bugiwsl0.mpdn4nr2.fooq7fky").click()
+
+        await page.wait_for_selector("._2sDI2 .jScby.Iaqxu.FCS6Q")
+        filter_options = await page.query_selector_all("._2sDI2 .jScby.Iaqxu.FCS6Q")
         await filter_options[0].click()
 
         await asyncio.sleep(3)
