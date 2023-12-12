@@ -23,12 +23,12 @@ async def check_yes(message_content) -> bool | None:
 		return None
 
 async def valid_phone_number(message_content) -> bool:
-	if len(message_content) < 17:
+	if len(message_content) < 16:
 		return False
 	if "-" not in message_content:
 		return False
 	only_numbers = re.sub(r'[^0-9]', '', message_content)
-	if len(only_numbers) < 13:
+	if len(only_numbers) < 12:
 		return False
 	return True
 
