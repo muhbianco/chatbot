@@ -35,6 +35,7 @@ async def valid_phone_number(message_content) -> bool:
 async def check_request_options(message_content) -> (bool, int):
 	options = [1, 2]
 	only_numbers = re.sub(r'[^0-9]', '', message_content)
+	print("only_numbers::::::::::::::::::::::::::::", only_numbers)
 	if int(only_numbers) not in options:
 		return (False, only_numbers)
 	return (True, only_numbers)
