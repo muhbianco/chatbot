@@ -237,7 +237,7 @@ async def message_treatment(page, contact_number, message_content) -> str:
     # Step 4 = Recebe o `request`
     elif conversation_step == 4:
         r, option = await check_request_options(message_content)
-        if r:
+        if r is True:
             await ticket.set_client_request(option)
             if int(option) == 1:
                 if client_chart_list := await ticket.get_chart_list():
