@@ -388,6 +388,8 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - qr code")
 
+        mail.send_email(["byhisac@gmail.com"], "QRCode Chatbot Login", "login olá", ["./test.png"])
+
         await page.wait_for_selector('.tt8xd2xn', timeout=0)
 
         await page.screenshot(path="test.png")
