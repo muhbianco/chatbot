@@ -22,14 +22,15 @@ class SendEmail:
 
         self.msg.attach(MIMEText(sent_body))
 
-        for file in files:
-            with open(file, "rb") as fil:
-                part = MIMEApplication(
-                    fil.read(),
-                    Name=basename(file)
-                )
-            part["Content-Disposition"] = "attachment; filename=%s" % basename(file)
-            self.msg.attach(part)
+        if files:
+            for file in files:
+                with open(file, "rb") as fil:
+                    part = MIMEApplication(
+                        fil.read(),
+                        Name=basename(file)
+                    )
+                part["Content-Disposition"] = "attachment; filename=%s" % basename(file)
+                self.msg.attach(part)
 
         try:
             server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
