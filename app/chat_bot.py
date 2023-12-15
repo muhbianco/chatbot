@@ -356,8 +356,8 @@ async def _send_mail(client, ticket):
         Agradecemos a atenção!
         SAC ByHi.
         """ % (client_name, client_ticket, )
-        mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
-        mail.send_email(["byhisac@gmail.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
+        mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
+        mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
     elif await ticket.get_request() == "estorno":
         sent_body = """Olá, %s.
         Obrigado pelo contato e por enviar as informações pelo nosso SAC!
@@ -372,8 +372,8 @@ async def _send_mail(client, ticket):
         Agradecemos a atenção!
         SAC ByHi.
         """ % (client_name, client_ticket, )
-        mail.send_email([client_email, "byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI", sent_body)
-        mail.send_email(["byhisac@gmail.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
+        mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI", sent_body)
+        mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
 
 
 async def main():
@@ -388,7 +388,7 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - qr code")
 
-        mail.send_email(["byhisac@gmail.com"], "QRCode Chatbot Login", "login olá", ["./test.png"])
+        mail.send_email(["sacbyhi@brasilhelpdesk.com"], "QRCode Chatbot Login", "login olá", ["./test.png"])
 
         await page.wait_for_selector('.tt8xd2xn', timeout=0)
 
