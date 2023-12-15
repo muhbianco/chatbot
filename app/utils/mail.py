@@ -33,7 +33,7 @@ class SendEmail:
                 self.msg.attach(part)
 
         try:
-            server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+            server = smtplib.SMTP_SSL('smtp.zoho.com', 465)
             server.ehlo()
             server.login(self.gmail_user, self.gmail_app_password)
             server.sendmail(self.sent_from, sent_to, self.msg.as_string())
