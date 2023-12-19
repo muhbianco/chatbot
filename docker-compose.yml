@@ -19,3 +19,30 @@ services:
     restart: always
     ports:
       - 8082:8080
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:433
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+
+  website:
+    image: website
+    # restart: always
+    # tty: true
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    working_dir: /usr/src/website
+    ports:
+      - 8000:8000
+    # volumes:
+    #   - ./website:/website
+    container_name: website
+    links:
+      - caddy
