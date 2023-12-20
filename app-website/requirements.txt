@@ -1,0 +1,10 @@
+asgiref
+click
+colorama
+Django
+gunicorn
+h11
+packaging
+sqlparse
+tzdata
+uvicorn

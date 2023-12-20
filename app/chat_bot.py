@@ -48,7 +48,6 @@ async def check_unread_messages(page):
 
         # Coleta o numero de telefone do cliente
         print("Esperando 03")
-        await asyncio.sleep(5)
         await page.screenshot(path="test.png")
         await page.wait_for_selector(".l7jjieqr.cw3vfol9._11JPr.selectable-text.copyable-text", timeout=1000)
         contact_number = await page.locator(".l7jjieqr.cw3vfol9._11JPr.selectable-text.copyable-text").inner_text()

@@ -1,10 +1,10 @@
-https://localhost, http://localhost  {
+https://localhost, http://localhost {
     log
-    reverse_proxy website:8080
+    reverse_proxy localhost:8000
 }
 
-website.localhost {
+website.www {
     log
     tls internal
-    reverse_proxy website:8080
+    reverse_proxy localhost:8000
 }

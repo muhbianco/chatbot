@@ -21,22 +21,22 @@ services:
       - 8082:8080
 
   caddy:
-    image: caddy:latest
+    image: caddy:alpine
     restart: unless-stopped
     ports:
       - 80:80
       - 443:433
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./app-website/Caddyfile:/etc/caddy/Caddyfile
       - ./caddy_data:/data
       - ./caddy_config:/config
 
   website:
     image: website
-    # restart: always
-    # tty: true
+    restart: always
+    tty: true
     build:
-      context: ./website
+      context: ./app-website
       dockerfile: Dockerfile
     working_dir: /usr/src/website
     ports:
@@ -46,3 +46,4 @@ services:
     container_name: website
     links:
       - caddy
+    entrypoint: ["sh", "/start.sh"]

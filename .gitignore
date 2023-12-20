@@ -3,3 +3,4 @@
 vote.py
 /data
 *.pyc
+/caddy_*
