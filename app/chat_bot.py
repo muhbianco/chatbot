@@ -36,29 +36,24 @@ async def check_unread_messages(page):
 
         # Abre o contact info
         print("Esperando 01")
-        await page.screenshot(path="test.png")
         await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
         await page.locator(".AmmtE .kiiy14zj").click()
 
         print("Esperando 02")
-        await page.screenshot(path="test.png")
         await page.wait_for_selector("._2sDI2._2NU8a .jScby.Iaqxu.FCS6Q", timeout=0)
         menu_buttons = await page.query_selector_all("._2sDI2._2NU8a .jScby.Iaqxu.FCS6Q")
         await menu_buttons[0].click()
 
         # Coleta o numero de telefone do cliente
         print("Esperando 03")
-        await page.screenshot(path="test.png")
         await page.wait_for_selector(".l7jjieqr.cw3vfol9._11JPr.selectable-text.copyable-text", timeout=1000)
         contact_number = await page.locator(".l7jjieqr.cw3vfol9._11JPr.selectable-text.copyable-text").inner_text()
         if not await valid_phone_number(contact_number):
             print("Esperando 04")
-            await page.screenshot(path="test.png")
             await page.wait_for_selector(".enbbiyaj.e1gr2w1z.hp667wtd", timeout=1000)
             contact_number = await page.locator(".enbbiyaj.e1gr2w1z.hp667wtd").inner_text()
 
         print("Esperando 05")
-        await page.screenshot(path="test.png")
         await page.wait_for_selector(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj", timeout=0)
         await page.locator(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj").click()
         await asyncio.sleep(2)
@@ -76,16 +71,19 @@ async def check_unread_messages(page):
             await asyncio.sleep(1)
 
         print("RESPOSTA PRONTA:::::", response)
-        await page.screenshot(path="response.png")
 
         print("Esperando 06")
-        await page.screenshot(path="test.png")
         await page.wait_for_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt", timeout=0)
         place_holder = await page.query_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt")
         await place_holder.focus()
-        await place_holder.type(response)
+        response_splits = response.split("\n")
+        for line in response_splits:
+            await place_holder.type(line)
+            await page.keyboard.down("Shift")
+            await page.keyboard.press("Enter")
+            await page.keyboard.up("Shift")
+        
         print("Esperando 07")
-        await page.screenshot(path="response1.png")
         await page.wait_for_selector(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq", timeout=0)
         await page.locator(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq").click()
         await page.keyboard.press('Escape')
@@ -332,15 +330,20 @@ async def _send_mail(client, ticket):
     client_chart = await ticket.get_chart_list()
     client_request = await ticket.get_request()
     client_seller = await ticket.get_seller()
+    client_pix_key = await ticket.get_pix_key()
+    
     subject = f"Protocolo: {client_ticket} ({client_name}) - "
-    sent_body_byhi = """Nome completo: %s
-        CPF: %s
-        Telefone: %s
-        Pedido: %s
-        Protocolo: %s
-        Solicitação: %s
-        Vendedor: %s""" % (client_name, client_document, client_phone, client_chart, client_ticket, client_request, client_seller)
-    if await ticket.get_request() == "produto":
+    sent_body_byhi = f"""Nome completo: {client_name}
+        CPF: {client_document}
+        Telefone: {client_phone}
+        Email: {client_email}
+        Pedido: {client_chart}
+        Protocolo: {client_ticket}
+        Solicitação: {client_request}
+        {f'Pix: {client_pix_key}' if client_request == 'estorno' else ''}
+        Vendedor: {client_seller}"""
+
+    if client_request == "produto":
         sent_body = """Olá, %s.
         Obrigado pelo contato e por enviar as informações pelo nosso SAC!
         O seu protocolo é %s.
@@ -357,7 +360,8 @@ async def _send_mail(client, ticket):
         """ % (client_name, client_ticket, )
         mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
         mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
-    elif await ticket.get_request() == "estorno":
+
+    elif client_request == "estorno":
         sent_body = """Olá, %s.
         Obrigado pelo contato e por enviar as informações pelo nosso SAC!
         O seu protocolo é %s.
