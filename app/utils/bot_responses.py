@@ -35,7 +35,7 @@ Lembrando que utilizaremos este email para te atualizar sobre qualquer novidade 
 É importante que seja um email válido."""
 
     async def invalid_document(self) -> str:
-        return "Documento inválido. Por favor, informe um CPF/CNPJ válido. Digite somente o seu nome completo e aguarde o robô responder! Tente novamente."
+        return "Documento inválido. Por favor, informe um CPF/CNPJ válido. Digite somente o CPF e aguarde o robô responder! Tente novamente."
 
     async def invalid_bool(self) -> str:
         return "Desculpe, não entendi. Tente responder 'Sim' ou 'Não' somente e aguarde o ROBÔ responder."
