@@ -38,7 +38,7 @@ Lembrando que utilizaremos este email para te atualizar sobre qualquer novidade 
         return "Documento inválido. Por favor, informe um CPF/CNPJ válido. Digite somente o CPF e aguarde o robô responder! Tente novamente."
 
     async def invalid_bool(self) -> str:
-        return "Desculpe, não entendi. Tente responder 'Sim' ou 'Não' somente e aguarde o ROBÔ responder."
+        return "Desculpe, não entendi. Tente responder SIM ou NÃO somente e aguarde o ROBÔ responder."
 
     async def invalid_option(self) -> str:
         return "Desculpe, opção inválida. Tente responder exatamente o que o robô pedir. Não utilize fotos e prints para responder, somente texto. Tente novamente."
@@ -79,7 +79,7 @@ Atenciosamente, SAC BYHI."""
 
     async def name_is_correct(self, client_name) -> str:
         return f"""{client_name}
-Seu nome está correto? Digite 'SIM' para confirmar ou 'NÃO' para altera-lo."""
+Seu nome está correto? Digite SIM para confirmar ou NÃO para altera-lo."""
 
     async def request_pix_key(self) -> str:
         return "Por favor, nos informe a chave pix que deseja receber o reembolso. Digite em uma única mensagem."
@@ -90,16 +90,16 @@ Seu nome está correto? Digite 'SIM' para confirmar ou 'NÃO' para altera-lo."""
     async def request_chart_confirm(self, chart_list) -> str:
         return f"""Certo, confira a lista de produtos do seu pedido:
 {chart_list}
-Está correto? Digite 'SIM' para confirmar ou 'NÃO' para altera-la."""
+Está correto? Digite SIM para confirmar ou NÃO para altera-la."""
 
     async def request_seller(self) -> str:
         return f"""Você lembra por qual vendedor foi atendido?
-Caso sim, digite o nome do vendedor. Caso não lembre, apenas digite 'NÃO' e aguarde o ROBÔ responder."""
+Caso sim, digite o nome do vendedor. Caso não lembre, apenas digite NÃO e aguarde o ROBÔ responder."""
 
     async def request_seller_confirm(self, name_seller) -> str:
         return f"""{name_seller}
-Este é o nome do vendedor? Digite 'SIM' para confirmar ou 'NÃO' para altera-lo."""
+Este é o nome do vendedor? Digite SIM para confirmar ou NÃO para altera-lo."""
 
     async def request_pix_confirm(self, pix_key) -> str:
         return f"""{pix_key}
-Sua chave pix está correta? Digite 'SIM' para confirmar ou 'NÃO' para altera-la."""
+Sua chave pix está correta? Digite SIM para confirmar ou NÃO para altera-la."""
