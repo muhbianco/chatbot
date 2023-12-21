@@ -29,7 +29,7 @@ async def check_unread_messages(page):
 
     if unread_chats:
         # Se houver mensagens não lidas, clique na primeira
-        await unread_chats[0].click()
+        await unread_chats[len(unread_chats)-1].click()
 
         # Aguarde um momento para a mensagem ser carregada
         # await page.wait_for_timeout(2000)
