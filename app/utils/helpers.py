@@ -1,5 +1,6 @@
 import re
 import asyncio
+import random, string
 from unidecode import unidecode
 from utils.db import DB
 
@@ -39,3 +40,9 @@ async def check_request_options(message_content) -> (bool, int):
 	if not only_numbers or int(only_numbers) not in options:
 		return (False, only_numbers)
 	return (True, only_numbers)
+
+class RobotName:
+	name: str
+
+	def __init__(self):
+		self.name = "".join(random.choices(string.ascii_letters + string.digits, k=5))

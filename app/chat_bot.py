@@ -3,6 +3,7 @@ import re
 import pprint
 import traceback
 import sys
+import os
 from dotenv import load_dotenv
 from pprint import pformat
 from playwright.async_api import async_playwright
@@ -22,18 +23,24 @@ db = DB()
 responses = BotResponses()
 mail = SendEmail()
 
-
 async def check_unread_messages(page):
     # Pegue todas as conversas não lidas
-    unread_chats = await page.query_selector_all('.aumms1qt')
+    unread_chats = await page.query_selector_all('._3YS_f._2A1R8')
+    print("unread_chats", unread_chats)
+    if not unread_chats:
+        print('Não há mensagens não lidas.')
+        return
 
-    if unread_chats:
+    selected_chat = unread_chats[len(unread_chats)-1]
+    chat = await selected_chat.query_selector(".Mk0Bp._30scZ span[dir='auto']")
+    contact_number = await chat.text_content()
+    print("contact_number easy:::::", contact_number)
+    if await valid_phone_number(contact_number):
         # Se houver mensagens não lidas, clique na primeira
-        await unread_chats[len(unread_chats)-1].click()
+        await page.locator(f".Mk0Bp._30scZ span[dir='auto'][title='{contact_number}']").click()
 
-        # Aguarde um momento para a mensagem ser carregada
-        # await page.wait_for_timeout(2000)
-
+    else:
+        await selected_chat.click()
         # Abre o contact info
         print("Esperando 01")
         await page.wait_for_selector(".AmmtE .kiiy14zj", timeout=0)
@@ -58,41 +65,40 @@ async def check_unread_messages(page):
         await page.locator(".kk3akd72.svlsagor.fewfhwl7.ajgl1lbb.ltyqj8pj").click()
         await asyncio.sleep(2)
 
-        # Pega a ultima mensagem enviada pelo cliente
-        messages = await page.query_selector_all(".message-in ._1BOF7._2AOIt ._21Ahp ._11JPr.selectable-text.copyable-text")
-        last_message_content = await messages[len(messages)-1].text_content()
+        print("contact_number hard:::::", contact_number)
 
-        response = ""
-        if not last_message_content:
-            response = await responses.general_error()
+    # Pega a ultima mensagem enviada pelo cliente
+    messages = await page.query_selector_all(".message-in ._1BOF7._2AOIt ._21Ahp ._11JPr.selectable-text.copyable-text")
+    last_message_content = await messages[len(messages)-1].text_content()
 
-        while not response:
-            response = await message_treatment(page, contact_number, last_message_content)
-            await asyncio.sleep(1)
+    response = ""
+    if not last_message_content:
+        response = await responses.general_error()
 
-        print("RESPOSTA PRONTA:::::", response)
+    while not response:
+        response = await message_treatment(page, contact_number, last_message_content)
+        await asyncio.sleep(1)
 
-        print("Esperando 06")
-        await page.wait_for_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt", timeout=0)
-        place_holder = await page.query_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt")
-        await place_holder.focus()
-        response_splits = response.split("\n")
-        for line in response_splits:
-            await place_holder.type(line)
-            await page.keyboard.down("Shift")
-            await page.keyboard.press("Enter")
-            await page.keyboard.up("Shift")
-        
-        print("Esperando 07")
-        await page.wait_for_selector(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq", timeout=0)
-        await page.locator(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq").click()
-        await page.keyboard.press('Escape')
+    print("RESPOSTA PRONTA:::::", response)
 
-    else:
-        print('Não há mensagens não lidas.')
+    print("Esperando 06")
+    await page.wait_for_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt", timeout=0)
+    place_holder = await page.query_selector("._3Uu1_ .to2l77zo.gfz4du6o.ag5g9lrv.bze30y65.kao4egtt")
+    await place_holder.focus()
+    response_splits = response.split("\n")
+    for line in response_splits:
+        await place_holder.type(line)
+        await page.keyboard.down("Shift")
+        await page.keyboard.press("Enter")
+        await page.keyboard.up("Shift")
+    
+    print("Esperando 07")
+    await page.wait_for_selector(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq", timeout=0)
+    await page.locator(".tvf2evcx.oq44ahr5.lb5m6g5c.svlsagor.p2rjqpw5.epia9gcq").click()
+    await page.keyboard.press('Escape')
+
 
 async def message_treatment(page, contact_number, message_content) -> str:
-    print("contact_number:::::::", contact_number)
     print("message_content:::::::", message_content)
 
     conversation = Conversation(contact_number)
@@ -358,8 +364,8 @@ async def _send_mail(client, ticket):
         Agradecemos a atenção!
         SAC ByHi.
         """ % (client_name, client_ticket, )
-        mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
-        mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
+        await mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI", sent_body)
+        await mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Envio pendente SAC BYHI - DADOS", sent_body_byhi)
 
     elif client_request == "estorno":
         sent_body = """Olá, %s.
@@ -375,8 +381,8 @@ async def _send_mail(client, ticket):
         Agradecemos a atenção!
         SAC ByHi.
         """ % (client_name, client_ticket, )
-        mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI", sent_body)
-        mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
+        await mail.send_email([client_email, "sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI", sent_body)
+        await mail.send_email(["sacbyhi@brasilhelpdesk.com"], f"{subject} Reembolso SAC BYHI - DADOS", sent_body_byhi)
 
 
 async def main():
@@ -391,7 +397,7 @@ async def main():
         await page.screenshot(path="test.png")
         print("print tirado - qr code")
 
-        mail.send_email(["sacbyhi@brasilhelpdesk.com"], "QRCode Chatbot Login", "login olá", ["./test.png"])
+        await mail.send_email(["sacbyhi@brasilhelpdesk.com"], "QRCode Chatbot Login", "login olá", ["./test.png"])
 
         await page.wait_for_selector('.tt8xd2xn', timeout=0)
 
@@ -405,19 +411,20 @@ async def main():
         filter_options = await page.query_selector_all("._2sDI2 .jScby.Iaqxu.FCS6Q")
         await filter_options[0].click()
 
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         await page.screenshot(path="test.png")
         print("print tirado - unreadchats")
 
         while True:
             try:
                 print("checando")
+                await asyncio.sleep(1)
                 await check_unread_messages(page)
-                # Aguarde um tempo antes de verificar novamente
-                await asyncio.sleep(2)  # Altere o intervalo de verificação conforme necessário
             except Exception as e:
-                traceback.print_exc()
-                print(sys.exc_info())
+                os.makedirs("./logs", exist_ok=True)
+                with open("./logs/error.txt", "a+") as ft:
+                    traceback.print_exc(file=ft)
+                    ft.write("\n\n")
                 await page.keyboard.press('Escape')
 
         await browser.close()

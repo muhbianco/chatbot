@@ -31,3 +31,7 @@ class Conversation:
 
     async def close(self):
         await db.delete("DELETE FROM conversations WHERE phone_number=%s", (self.contact_number, ))
+
+    async def get_robot_name(self) -> str:
+        r = await db.fetchone("SELECT robot_code FROM conversations WHERE phone_number=%s", (self.contact_number, ))
+        return r["robot_code"]
